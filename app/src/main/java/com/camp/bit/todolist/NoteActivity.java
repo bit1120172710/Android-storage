@@ -1,7 +1,9 @@
 package com.camp.bit.todolist;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -11,17 +13,26 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.camp.bit.todolist.beans.State;
+import com.camp.bit.todolist.db.TodoContract;
+import com.camp.bit.todolist.db.TodoDbHelper;
+
+import java.util.Date;
+
 public class NoteActivity extends AppCompatActivity {
 
     private EditText editText;
     private Button addBtn;
+    public TodoDbHelper mDbHelper;
+    public SQLiteDatabase writedatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         setTitle(R.string.take_a_note);
-
+        mDbHelper =new TodoDbHelper(this);
+        writedatabase=mDbHelper.getWritableDatabase();
         editText = findViewById(R.id.edit_text);
         editText.setFocusable(true);
         editText.requestFocus();
@@ -41,6 +52,7 @@ public class NoteActivity extends AppCompatActivity {
                     Toast.makeText(NoteActivity.this,
                             "No content to add", Toast.LENGTH_SHORT).show();
                     return;
+
                 }
                 boolean succeed = saveNote2Database(content.toString().trim());
                 if (succeed) {
@@ -58,11 +70,20 @@ public class NoteActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        writedatabase.close();
+        writedatabase=null;
         super.onDestroy();
     }
 
     private boolean saveNote2Database(String content) {
+        ContentValues values =new ContentValues();
+        values.put(TodoContract.TodoEntry.COLUMN3_NAME,content);
+        values.put(TodoContract.TodoEntry.COLUMN2_NAME,State.TODO.intValue);
+        values.put(TodoContract.TodoEntry.COLUMN1_NAME,new Date().getTime());
+        long rowid=writedatabase.insert(TodoContract.TodoEntry.TABLE_NAME,null,values);
+        if(rowid>=0)return true;
         // TODO 插入一条新数据，返回是否插入成功
+
         return false;
     }
 }
